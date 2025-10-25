@@ -153,58 +153,80 @@
         );
         
         // プロジェクトカードコンポーネント
-        const ProjectCard = ({ project, onClick }) => (
-            <div onClick={onClick} className="bg-white rounded-xl shadow-sm border border-gray-200 p-6 card-hover cursor-pointer">
-                <div className="flex items-start justify-between mb-3">
-                    <div className="flex-1">
-                        <h3 className="text-lg font-semibold text-gray-900 mb-2">{project.title}</h3>
-                        <p className="text-gray-600 text-sm mb-3 line-clamp-2">{project.description}</p>
-                    </div>
-                    <span className={`px-3 py-1 rounded-full text-xs font-medium ${
-                        project.status === '募集中' ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-700'
-                    }`}>
-                        {project.status}
-                    </span>
-                </div>
-                
-                <div className="flex flex-wrap gap-2 mb-4">
-                    {project.tags.map((tag, idx) => (
-                        <span key={idx} className="inline-flex items-center space-x-1 px-2.5 py-1 bg-blue-50 text-blue-700 rounded-md text-xs">
-                            <Icons.Tag />
-                            <span>{tag}</span>
+        const ProjectCard = ({ project, onClick }) => {
+            const formatDate = (dateString) => {
+                const date = new Date(dateString);
+                return `${date.getMonth() + 1}/${date.getDate()}`;
+            };
+            
+            return (
+                <div onClick={onClick} className="bg-white rounded-xl shadow-sm border border-gray-200 p-6 card-hover cursor-pointer">
+                    <div className="flex items-start justify-between mb-3">
+                        <div className="flex-1">
+                            <h3 className="text-lg font-semibold text-gray-900 mb-2">{project.title}</h3>
+                            <p className="text-gray-600 text-sm mb-3 line-clamp-2">{project.description}</p>
+                        </div>
+                        <span className={`px-3 py-1 rounded-full text-xs font-medium ${
+                            project.status === '募集中' ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-700'
+                        }`}>
+                            {project.status}
                         </span>
-                    ))}
-                </div>
-                
-                <div className="flex items-center justify-between text-sm text-gray-500">
-                    <div className="flex items-center space-x-4">
-                        <div className="flex items-center space-x-1">
-                            <Icons.Users />
-                            <span>{project.participants}人参加</span>
-                        </div>
-                        <div className="flex items-center space-x-1">
-                            <Icons.Clock />
-                            <span>あと{project.daysLeft}日</span>
-                        </div>
                     </div>
-                    <span className="text-blue-600 font-medium">詳細を見る →</span>
+                    
+                    <div className="flex flex-wrap gap-2 mb-4">
+                        {project.tags.map((tag, idx) => (
+                            <span key={idx} className="inline-flex items-center space-x-1 px-2.5 py-1 bg-blue-50 text-blue-700 rounded-md text-xs">
+                                <Icons.Tag />
+                                <span>{tag}</span>
+                            </span>
+                        ))}
+                    </div>
+                    
+                    <div className="mb-3 text-xs text-gray-400">
+                        投稿日: {formatDate(project.createdDate)}
+                    </div>
+                    
+                    <div className="flex items-center justify-between text-sm text-gray-500">
+                        <div className="flex items-center space-x-4">
+                            <div className="flex items-center space-x-1">
+                                <Icons.Users />
+                                <span>{project.participants}人</span>
+                            </div>
+                            <div className="flex items-center space-x-1">
+                                <Icons.Clock />
+                                {project.daysLeft >= 0 ? (
+                                    <span className={project.daysLeft <= 7 ? 'text-red-600 font-medium' : ''}>
+                                        あと{project.daysLeft}日
+                                    </span>
+                                ) : (
+                                    <span className="text-gray-400">
+                                        {Math.abs(project.daysLeft)}日前終了
+                                    </span>
+                                )}
+                            </div>
+                        </div>
+                        <span className="text-blue-600 font-medium">詳細 →</span>
+                    </div>
                 </div>
-            </div>
-        );
+            );
+        };
         
         // ホーム画面
         const HomeView = ({ setCurrentView }) => {
             const [searchQuery, setSearchQuery] = useState('');
             const [selectedCategory, setSelectedCategory] = useState('すべて');
+            const [sortBy, setSortBy] = useState('newest');
+            const [showExpired, setShowExpired] = useState(false);
             
-            const projects = [
+            const allProjects = [
                 {
                     title: '数学の文章題データセット',
                     description: '小学校〜中学校レベルの算数・数学の文章題とその解答を募集しています。日常生活に関連する問題を歓迎します。',
                     tags: ['数学', '初級', 'CSV'],
                     status: '募集中',
                     participants: 23,
-                    daysLeft: 15
+                    daysLeft: 15,
+                    createdDate: '2025-10-10'
                 },
                 {
                     title: '日本の歴史に関するQ&A',
@@ -212,7 +234,8 @@
                     tags: ['歴史', '中級', 'JSON'],
                     status: '募集中',
                     participants: 45,
-                    daysLeft: 8
+                    daysLeft: 8,
+                    createdDate: '2025-10-15'
                 },
                 {
                     title: 'プログラミング初心者向けコード例',
@@ -220,7 +243,8 @@
                     tags: ['プログラミング', '初級', 'フォーム'],
                     status: '募集中',
                     participants: 67,
-                    daysLeft: 22
+                    daysLeft: 22,
+                    createdDate: '2025-10-01'
                 },
                 {
                     title: '料理レシピの自然言語処理',
@@ -228,7 +252,8 @@
                     tags: ['料理', '初級', 'CSV'],
                     status: '募集中',
                     participants: 34,
-                    daysLeft: 12
+                    daysLeft: 12,
+                    createdDate: '2025-10-12'
                 },
                 {
                     title: '医療用語の平易な言い換え',
@@ -236,7 +261,8 @@
                     tags: ['医療', '上級', 'JSON'],
                     status: '募集中',
                     participants: 18,
-                    daysLeft: 30
+                    daysLeft: 30,
+                    createdDate: '2025-09-25'
                 },
                 {
                     title: 'ビジネスメール例文集',
@@ -244,11 +270,71 @@
                     tags: ['ビジネス', '中級', 'フォーム'],
                     status: '募集中',
                     participants: 41,
-                    daysLeft: 5
+                    daysLeft: 5,
+                    createdDate: '2025-10-20'
+                },
+                {
+                    title: '英語の日常会話データセット',
+                    description: '日常生活で使える英語フレーズと日本語訳のペアを募集。実際に使える表現を重視します。',
+                    tags: ['語学', '初級', 'CSV'],
+                    status: '終了',
+                    participants: 156,
+                    daysLeft: -10,
+                    createdDate: '2025-08-15'
+                },
+                {
+                    title: '化学実験の手順書',
+                    description: '高校レベルの化学実験の手順と注意点を募集していました。安全性に配慮した内容を求めていました。',
+                    tags: ['化学', '中級', 'JSON'],
+                    status: '終了',
+                    participants: 28,
+                    daysLeft: -5,
+                    createdDate: '2025-09-01'
+                },
+                {
+                    title: '日本の伝統文化Q&A',
+                    description: '茶道、華道、書道など日本の伝統文化に関する質問と回答を募集していました。',
+                    tags: ['文化', '中級', 'フォーム'],
+                    status: '終了',
+                    participants: 73,
+                    daysLeft: -15,
+                    createdDate: '2025-07-20'
                 }
             ];
             
-            const categories = ['すべて', '数学', '歴史', 'プログラミング', '料理', '医療', 'ビジネス'];
+            const categories = ['すべて', '数学', '歴史', 'プログラミング', '料理', '医療', 'ビジネス', '語学', '化学', '文化'];
+            
+            // フィルタリングとソート
+            const filteredAndSortedProjects = allProjects
+                .filter(project => {
+                    // 期限切れフィルター
+                    if (!showExpired && project.status === '終了') return false;
+                    
+                    // カテゴリフィルター
+                    if (selectedCategory !== 'すべて' && !project.tags.includes(selectedCategory)) return false;
+                    
+                    // 検索フィルター
+                    if (searchQuery && !project.title.toLowerCase().includes(searchQuery.toLowerCase()) && 
+                        !project.description.toLowerCase().includes(searchQuery.toLowerCase())) return false;
+                    
+                    return true;
+                })
+                .sort((a, b) => {
+                    switch(sortBy) {
+                        case 'newest':
+                            return new Date(b.createdDate) - new Date(a.createdDate);
+                        case 'oldest':
+                            return new Date(a.createdDate) - new Date(b.createdDate);
+                        case 'deadline-asc':
+                            return a.daysLeft - b.daysLeft;
+                        case 'deadline-desc':
+                            return b.daysLeft - a.daysLeft;
+                        case 'popular':
+                            return b.participants - a.participants;
+                        default:
+                            return 0;
+                    }
+                });
             
             return (
                 <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
@@ -271,48 +357,86 @@
                     
                     {/* 検索とフィルター */}
                     <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6 mb-6">
-                        <div className="flex flex-col md:flex-row gap-4">
-                            <div className="flex-1 relative">
-                                <Icons.Search />
-                                <input
-                                    type="text"
-                                    placeholder="プロジェクトを検索..."
-                                    value={searchQuery}
-                                    onChange={(e) => setSearchQuery(e.target.value)}
-                                    className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-                                />
-                                <div className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400">
+                        <div className="flex flex-col gap-4">
+                            <div className="flex flex-col md:flex-row gap-4">
+                                <div className="flex-1 relative">
                                     <Icons.Search />
+                                    <input
+                                        type="text"
+                                        placeholder="プロジェクトを検索..."
+                                        value={searchQuery}
+                                        onChange={(e) => setSearchQuery(e.target.value)}
+                                        className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                                    />
+                                    <div className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400">
+                                        <Icons.Search />
+                                    </div>
+                                </div>
+                                <div className="flex gap-2">
+                                    <select
+                                        value={sortBy}
+                                        onChange={(e) => setSortBy(e.target.value)}
+                                        className="px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white text-gray-700"
+                                    >
+                                        <option value="newest">投稿日：新しい順</option>
+                                        <option value="oldest">投稿日：古い順</option>
+                                        <option value="deadline-asc">締切：近い順</option>
+                                        <option value="deadline-desc">締切：遠い順</option>
+                                        <option value="popular">人気順</option>
+                                    </select>
                                 </div>
                             </div>
-                            <div className="flex gap-2 overflow-x-auto">
-                                {categories.map((category) => (
-                                    <button
-                                        key={category}
-                                        onClick={() => setSelectedCategory(category)}
-                                        className={`px-4 py-2 rounded-lg whitespace-nowrap transition-colors ${
-                                            selectedCategory === category
-                                                ? 'bg-blue-600 text-white'
-                                                : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
-                                        }`}
-                                    >
-                                        {category}
-                                    </button>
-                                ))}
+                            <div className="flex items-center justify-between">
+                                <div className="flex gap-2 overflow-x-auto">
+                                    {categories.map((category) => (
+                                        <button
+                                            key={category}
+                                            onClick={() => setSelectedCategory(category)}
+                                            className={`px-4 py-2 rounded-lg whitespace-nowrap transition-colors ${
+                                                selectedCategory === category
+                                                    ? 'bg-blue-600 text-white'
+                                                    : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                                            }`}
+                                        >
+                                            {category}
+                                        </button>
+                                    ))}
+                                </div>
+                                <label className="flex items-center space-x-2 cursor-pointer whitespace-nowrap ml-4">
+                                    <input
+                                        type="checkbox"
+                                        checked={showExpired}
+                                        onChange={(e) => setShowExpired(e.target.checked)}
+                                        className="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
+                                    />
+                                    <span className="text-sm text-gray-700">終了済みも表示</span>
+                                </label>
                             </div>
                         </div>
                     </div>
                     
-                    {/* プロジェクト一覧 */}
-                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                        {projects.map((project, idx) => (
-                            <ProjectCard 
-                                key={idx} 
-                                project={project} 
-                                onClick={() => setCurrentView('detail')}
-                            />
-                        ))}
+                    {/* 結果件数表示 */}
+                    <div className="mb-4 text-sm text-gray-600">
+                        {filteredAndSortedProjects.length}件のプロジェクト
                     </div>
+                    
+                    {/* プロジェクト一覧 */}
+                    {filteredAndSortedProjects.length === 0 ? (
+                        <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-12 text-center">
+                            <p className="text-gray-500 text-lg">該当するプロジェクトが見つかりませんでした</p>
+                            <p className="text-gray-400 text-sm mt-2">検索条件を変更してお試しください</p>
+                        </div>
+                    ) : (
+                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                            {filteredAndSortedProjects.map((project, idx) => (
+                                <ProjectCard 
+                                    key={idx} 
+                                    project={project} 
+                                    onClick={() => setCurrentView('detail')}
+                                />
+                            ))}
+                        </div>
+                    )}
                 </div>
             );
         };
