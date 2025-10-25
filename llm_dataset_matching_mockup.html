@@ -1,0 +1,742 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>LLM Dataset Matching - モックアップ</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@300;400;500;600;700&display=swap');
+        
+        body {
+            font-family: 'Noto Sans JP', sans-serif;
+        }
+        
+        .gradient-bg {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        }
+        
+        .card-hover {
+            transition: all 0.3s ease;
+        }
+        
+        .card-hover:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 12px 24px rgba(102, 126, 234, 0.15);
+        }
+        
+        .btn-primary {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            transition: all 0.3s ease;
+        }
+        
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 16px rgba(102, 126, 234, 0.3);
+        }
+    </style>
+</head>
+<body class="bg-gray-50">
+    <div id="root"></div>
+    
+    <script src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+    <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+    
+    <script type="text/babel">
+        const { useState } = React;
+        
+        // アイコンコンポーネント
+        const Icons = {
+            Search: () => (
+                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                </svg>
+            ),
+            Bell: () => (
+                <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9" />
+                </svg>
+            ),
+            User: () => (
+                <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+                </svg>
+            ),
+            Plus: () => (
+                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
+                </svg>
+            ),
+            Clock: () => (
+                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                </svg>
+            ),
+            Users: () => (
+                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z" />
+                </svg>
+            ),
+            Tag: () => (
+                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.994 1.994 0 013 12V7a4 4 0 014-4z" />
+                </svg>
+            ),
+            Upload: () => (
+                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" />
+                </svg>
+            ),
+            Database: () => (
+                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 7v10c0 2.21 3.582 4 8 4s8-1.79 8-4V7M4 7c0 2.21 3.582 4 8 4s8-1.79 8-4M4 7c0-2.21 3.582-4 8-4s8 1.79 8 4m0 5c0 2.21-3.582 4-8 4s-8-1.79-8-4" />
+                </svg>
+            )
+        };
+        
+        // ヘッダーコンポーネント
+        const Header = ({ currentView, setCurrentView }) => (
+            <header className="bg-white shadow-sm border-b border-gray-200">
+                <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+                    <div className="flex justify-between items-center h-16">
+                        <div className="flex items-center space-x-8">
+                            <div className="flex items-center space-x-2 cursor-pointer" onClick={() => setCurrentView('home')}>
+                                <Icons.Database />
+                                <span className="text-xl font-bold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
+                                    DataMatch
+                                </span>
+                            </div>
+                            <nav className="hidden md:flex space-x-6">
+                                <button 
+                                    onClick={() => setCurrentView('home')}
+                                    className={`${currentView === 'home' ? 'text-blue-600 font-medium' : 'text-gray-600 hover:text-blue-600'} transition-colors`}
+                                >
+                                    プロジェクト一覧
+                                </button>
+                                <button 
+                                    onClick={() => setCurrentView('myprojects')}
+                                    className={`${currentView === 'myprojects' ? 'text-blue-600 font-medium' : 'text-gray-600 hover:text-blue-600'} transition-colors`}
+                                >
+                                    参加中
+                                </button>
+                                <button 
+                                    onClick={() => setCurrentView('about')}
+                                    className={`${currentView === 'about' ? 'text-blue-600 font-medium' : 'text-gray-600 hover:text-blue-600'} transition-colors`}
+                                >
+                                    使い方
+                                </button>
+                            </nav>
+                        </div>
+                        <div className="flex items-center space-x-4">
+                            <button 
+                                onClick={() => setCurrentView('create')}
+                                className="btn-primary text-white px-4 py-2 rounded-lg flex items-center space-x-2 text-sm font-medium"
+                            >
+                                <Icons.Plus />
+                                <span>プロジェクト作成</span>
+                            </button>
+                            <button className="text-gray-600 hover:text-blue-600 transition-colors relative">
+                                <Icons.Bell />
+                                <span className="absolute -top-1 -right-1 w-2 h-2 bg-red-500 rounded-full"></span>
+                            </button>
+                            <button 
+                                onClick={() => setCurrentView('profile')}
+                                className="text-gray-600 hover:text-blue-600 transition-colors"
+                            >
+                                <Icons.User />
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </header>
+        );
+        
+        // プロジェクトカードコンポーネント
+        const ProjectCard = ({ project, onClick }) => (
+            <div onClick={onClick} className="bg-white rounded-xl shadow-sm border border-gray-200 p-6 card-hover cursor-pointer">
+                <div className="flex items-start justify-between mb-3">
+                    <div className="flex-1">
+                        <h3 className="text-lg font-semibold text-gray-900 mb-2">{project.title}</h3>
+                        <p className="text-gray-600 text-sm mb-3 line-clamp-2">{project.description}</p>
+                    </div>
+                    <span className={`px-3 py-1 rounded-full text-xs font-medium ${
+                        project.status === '募集中' ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-700'
+                    }`}>
+                        {project.status}
+                    </span>
+                </div>
+                
+                <div className="flex flex-wrap gap-2 mb-4">
+                    {project.tags.map((tag, idx) => (
+                        <span key={idx} className="inline-flex items-center space-x-1 px-2.5 py-1 bg-blue-50 text-blue-700 rounded-md text-xs">
+                            <Icons.Tag />
+                            <span>{tag}</span>
+                        </span>
+                    ))}
+                </div>
+                
+                <div className="flex items-center justify-between text-sm text-gray-500">
+                    <div className="flex items-center space-x-4">
+                        <div className="flex items-center space-x-1">
+                            <Icons.Users />
+                            <span>{project.participants}人参加</span>
+                        </div>
+                        <div className="flex items-center space-x-1">
+                            <Icons.Clock />
+                            <span>あと{project.daysLeft}日</span>
+                        </div>
+                    </div>
+                    <span className="text-blue-600 font-medium">詳細を見る →</span>
+                </div>
+            </div>
+        );
+        
+        // ホーム画面
+        const HomeView = ({ setCurrentView }) => {
+            const [searchQuery, setSearchQuery] = useState('');
+            const [selectedCategory, setSelectedCategory] = useState('すべて');
+            
+            const projects = [
+                {
+                    title: '数学の文章題データセット',
+                    description: '小学校〜中学校レベルの算数・数学の文章題とその解答を募集しています。日常生活に関連する問題を歓迎します。',
+                    tags: ['数学', '初級', 'CSV'],
+                    status: '募集中',
+                    participants: 23,
+                    daysLeft: 15
+                },
+                {
+                    title: '日本の歴史に関するQ&A',
+                    description: '日本史に関する質問と詳細な回答のペアを募集。時代は問いません。オリジナルの解説を重視します。',
+                    tags: ['歴史', '中級', 'JSON'],
+                    status: '募集中',
+                    participants: 45,
+                    daysLeft: 8
+                },
+                {
+                    title: 'プログラミング初心者向けコード例',
+                    description: 'Python/JavaScriptの初心者向けコード例と説明を募集。実用的で分かりやすい例を求めています。',
+                    tags: ['プログラミング', '初級', 'フォーム'],
+                    status: '募集中',
+                    participants: 67,
+                    daysLeft: 22
+                },
+                {
+                    title: '料理レシピの自然言語処理',
+                    description: '料理レシピの手順を自然な日本語で記述したデータを募集。地域料理や家庭料理も大歓迎です。',
+                    tags: ['料理', '初級', 'CSV'],
+                    status: '募集中',
+                    participants: 34,
+                    daysLeft: 12
+                },
+                {
+                    title: '医療用語の平易な言い換え',
+                    description: '医療用語とその平易な説明のペアを募集。患者さんが理解しやすい表現を重視します。',
+                    tags: ['医療', '上級', 'JSON'],
+                    status: '募集中',
+                    participants: 18,
+                    daysLeft: 30
+                },
+                {
+                    title: 'ビジネスメール例文集',
+                    description: '様々なシチュエーションでのビジネスメール例文を募集。敬語の使い方も含めて収集します。',
+                    tags: ['ビジネス', '中級', 'フォーム'],
+                    status: '募集中',
+                    participants: 41,
+                    daysLeft: 5
+                }
+            ];
+            
+            const categories = ['すべて', '数学', '歴史', 'プログラミング', '料理', '医療', 'ビジネス'];
+            
+            return (
+                <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+                    {/* ヒーローセクション */}
+                    <div className="gradient-bg rounded-2xl p-8 mb-8 text-white">
+                        <h1 className="text-3xl font-bold mb-3">LLM向けデータセットに協力しよう</h1>
+                        <p className="text-blue-100 mb-6">あなたのオリジナルデータが、AI開発に貢献します</p>
+                        <div className="flex items-center space-x-4">
+                            <button 
+                                onClick={() => setCurrentView('create')}
+                                className="bg-white text-blue-600 px-6 py-3 rounded-lg font-medium hover:shadow-lg transition-all"
+                            >
+                                プロジェクトを作成
+                            </button>
+                            <button className="border-2 border-white text-white px-6 py-3 rounded-lg font-medium hover:bg-white hover:text-blue-600 transition-all">
+                                使い方を見る
+                            </button>
+                        </div>
+                    </div>
+                    
+                    {/* 検索とフィルター */}
+                    <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6 mb-6">
+                        <div className="flex flex-col md:flex-row gap-4">
+                            <div className="flex-1 relative">
+                                <Icons.Search />
+                                <input
+                                    type="text"
+                                    placeholder="プロジェクトを検索..."
+                                    value={searchQuery}
+                                    onChange={(e) => setSearchQuery(e.target.value)}
+                                    className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                                />
+                                <div className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400">
+                                    <Icons.Search />
+                                </div>
+                            </div>
+                            <div className="flex gap-2 overflow-x-auto">
+                                {categories.map((category) => (
+                                    <button
+                                        key={category}
+                                        onClick={() => setSelectedCategory(category)}
+                                        className={`px-4 py-2 rounded-lg whitespace-nowrap transition-colors ${
+                                            selectedCategory === category
+                                                ? 'bg-blue-600 text-white'
+                                                : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                                        }`}
+                                    >
+                                        {category}
+                                    </button>
+                                ))}
+                            </div>
+                        </div>
+                    </div>
+                    
+                    {/* プロジェクト一覧 */}
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                        {projects.map((project, idx) => (
+                            <ProjectCard 
+                                key={idx} 
+                                project={project} 
+                                onClick={() => setCurrentView('detail')}
+                            />
+                        ))}
+                    </div>
+                </div>
+            );
+        };
+        
+        // プロジェクト詳細画面
+        const ProjectDetailView = ({ setCurrentView }) => (
+            <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+                <button 
+                    onClick={() => setCurrentView('home')}
+                    className="text-blue-600 hover:text-blue-700 mb-6 flex items-center space-x-2"
+                >
+                    <span>← 一覧に戻る</span>
+                </button>
+                
+                <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-8">
+                    <div className="flex items-start justify-between mb-6">
+                        <div>
+                            <h1 className="text-3xl font-bold text-gray-900 mb-2">数学の文章題データセット</h1>
+                            <div className="flex items-center space-x-4 text-sm text-gray-600">
+                                <span>作成者: 田中太郎</span>
+                                <span>•</span>
+                                <span>作成日: 2025/10/10</span>
+                            </div>
+                        </div>
+                        <span className="px-4 py-2 bg-green-100 text-green-700 rounded-full text-sm font-medium">
+                            募集中
+                        </span>
+                    </div>
+                    
+                    <div className="mb-6">
+                        <h2 className="text-xl font-semibold mb-3">プロジェクト概要</h2>
+                        <p className="text-gray-700 leading-relaxed mb-4">
+                            小学校〜中学校レベルの算数・数学の文章題とその解答を募集しています。
+                            日常生活に関連する問題を歓迎します。買い物、旅行、料理など、
+                            実生活で使える数学の問題を作成してください。
+                        </p>
+                        <div className="flex flex-wrap gap-2">
+                            <span className="px-3 py-1 bg-blue-50 text-blue-700 rounded-md text-sm">数学</span>
+                            <span className="px-3 py-1 bg-blue-50 text-blue-700 rounded-md text-sm">初級</span>
+                            <span className="px-3 py-1 bg-blue-50 text-blue-700 rounded-md text-sm">CSV形式</span>
+                        </div>
+                    </div>
+                    
+                    <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4 mb-6">
+                        <p className="text-yellow-800 text-sm font-medium">
+                            ⚠️ このプロジェクトはオリジナルデータ限定です。既存の教材や試験問題からの流用は禁止されています。
+                        </p>
+                    </div>
+                    
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+                        <div className="bg-gray-50 rounded-lg p-4">
+                            <div className="text-gray-600 text-sm mb-1">参加者数</div>
+                            <div className="text-2xl font-bold text-gray-900">23人</div>
+                        </div>
+                        <div className="bg-gray-50 rounded-lg p-4">
+                            <div className="text-gray-600 text-sm mb-1">提出数</div>
+                            <div className="text-2xl font-bold text-gray-900">187件</div>
+                        </div>
+                        <div className="bg-gray-50 rounded-lg p-4">
+                            <div className="text-gray-600 text-sm mb-1">締切まで</div>
+                            <div className="text-2xl font-bold text-gray-900">15日</div>
+                        </div>
+                    </div>
+                    
+                    <div className="mb-6">
+                        <h2 className="text-xl font-semibold mb-3">提出フォーマット</h2>
+                        <div className="bg-gray-50 rounded-lg p-4">
+                            <p className="text-sm text-gray-600 mb-2">CSV形式（3列）</p>
+                            <pre className="bg-white p-3 rounded border border-gray-200 text-sm overflow-x-auto">
+問題,解答,解説
+"りんごが5個あります。3個食べました。何個残っていますか？","2個","5 - 3 = 2"
+                            </pre>
+                        </div>
+                    </div>
+                    
+                    <div className="mb-6">
+                        <h2 className="text-xl font-semibold mb-3">ライセンス</h2>
+                        <p className="text-gray-700">CC-BY 4.0（作成者を明記すれば自由に利用可能）</p>
+                    </div>
+                    
+                    <div className="flex space-x-4">
+                        <button 
+                            onClick={() => setCurrentView('submit')}
+                            className="btn-primary text-white px-8 py-3 rounded-lg font-medium flex-1"
+                        >
+                            このプロジェクトに参加する
+                        </button>
+                        <button className="border-2 border-gray-300 text-gray-700 px-6 py-3 rounded-lg font-medium hover:bg-gray-50">
+                            ブックマーク
+                        </button>
+                    </div>
+                </div>
+            </div>
+        );
+        
+        // データ提出画面
+        const SubmitView = ({ setCurrentView }) => {
+            const [agreed, setAgreed] = useState(false);
+            const [creditOption, setCreditOption] = useState('public');
+            
+            return (
+                <div className="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+                    <button 
+                        onClick={() => setCurrentView('detail')}
+                        className="text-blue-600 hover:text-blue-700 mb-6 flex items-center space-x-2"
+                    >
+                        <span>← プロジェクトに戻る</span>
+                    </button>
+                    
+                    <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-8">
+                        <h1 className="text-2xl font-bold text-gray-900 mb-6">データを提出する</h1>
+                        
+                        <div className="mb-6">
+                            <h2 className="text-lg font-semibold mb-3">提出方法を選択</h2>
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                <button className="border-2 border-blue-600 bg-blue-50 text-blue-700 p-4 rounded-lg font-medium hover:bg-blue-100 transition-colors">
+                                    <Icons.Upload />
+                                    <div className="mt-2">CSVファイルをアップロード</div>
+                                </button>
+                                <button className="border-2 border-gray-300 text-gray-700 p-4 rounded-lg font-medium hover:bg-gray-50 transition-colors">
+                                    フォームで入力
+                                </button>
+                            </div>
+                        </div>
+                        
+                        <div className="mb-6">
+                            <label className="block text-sm font-medium text-gray-700 mb-2">
+                                ファイルをアップロード
+                            </label>
+                            <div className="border-2 border-dashed border-gray-300 rounded-lg p-8 text-center hover:border-blue-400 transition-colors cursor-pointer">
+                                <Icons.Upload />
+                                <p className="mt-2 text-sm text-gray-600">
+                                    クリックしてファイルを選択、またはドラッグ&ドロップ
+                                </p>
+                                <p className="text-xs text-gray-500 mt-1">CSV形式のみ対応（最大10MB）</p>
+                            </div>
+                        </div>
+                        
+                        <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-6">
+                            <h3 className="font-semibold text-blue-900 mb-2">提出前の確認事項</h3>
+                            <ul className="text-sm text-blue-800 space-y-1">
+                                <li>• データはすべてあなたのオリジナルですか？</li>
+                                <li>• 既存の教材や試験問題からの流用はありませんか？</li>
+                                <li>• フォーマットは正しいですか？</li>
+                            </ul>
+                        </div>
+                        
+                        <div className="mb-6">
+                            <label className="flex items-start space-x-3 cursor-pointer">
+                                <input
+                                    type="checkbox"
+                                    checked={agreed}
+                                    onChange={(e) => setAgreed(e.target.checked)}
+                                    className="mt-1 w-5 h-5 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
+                                />
+                                <span className="text-sm text-gray-700">
+                                    <span className="font-medium text-red-600">必須</span> このデータはすべて私のオリジナルであり、
+                                    既存の教材や試験問題からの流用はありません。
+                                </span>
+                            </label>
+                        </div>
+                        
+                        <div className="mb-6">
+                            <h3 className="font-semibold text-gray-900 mb-3">クレジット掲載について</h3>
+                            <div className="space-y-2">
+                                <label className="flex items-center space-x-3 cursor-pointer">
+                                    <input
+                                        type="radio"
+                                        name="credit"
+                                        value="public"
+                                        checked={creditOption === 'public'}
+                                        onChange={(e) => setCreditOption(e.target.value)}
+                                        className="w-4 h-4 text-blue-600 border-gray-300 focus:ring-blue-500"
+                                    />
+                                    <span className="text-sm text-gray-700">名前を公開する（推奨）</span>
+                                </label>
+                                <label className="flex items-center space-x-3 cursor-pointer">
+                                    <input
+                                        type="radio"
+                                        name="credit"
+                                        value="anonymous"
+                                        checked={creditOption === 'anonymous'}
+                                        onChange={(e) => setCreditOption(e.target.value)}
+                                        className="w-4 h-4 text-blue-600 border-gray-300 focus:ring-blue-500"
+                                    />
+                                    <span className="text-sm text-gray-700">匿名で協力する</span>
+                                </label>
+                            </div>
+                        </div>
+                        
+                        <button
+                            disabled={!agreed}
+                            className={`w-full py-3 rounded-lg font-medium transition-all ${
+                                agreed
+                                    ? 'btn-primary text-white cursor-pointer'
+                                    : 'bg-gray-300 text-gray-500 cursor-not-allowed'
+                            }`}
+                        >
+                            データを提出する
+                        </button>
+                    </div>
+                </div>
+            );
+        };
+        
+        // プロジェクト作成画面
+        const CreateProjectView = ({ setCurrentView }) => (
+            <div className="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+                <button 
+                    onClick={() => setCurrentView('home')}
+                    className="text-blue-600 hover:text-blue-700 mb-6 flex items-center space-x-2"
+                >
+                    <span>← 戻る</span>
+                </button>
+                
+                <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-8">
+                    <h1 className="text-2xl font-bold text-gray-900 mb-6">新規プロジェクト作成</h1>
+                    
+                    <form className="space-y-6">
+                        <div>
+                            <label className="block text-sm font-medium text-gray-700 mb-2">
+                                プロジェクトタイトル <span className="text-red-600">*</span>
+                            </label>
+                            <input
+                                type="text"
+                                placeholder="例: 数学の文章題データセット"
+                                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                            />
+                        </div>
+                        
+                        <div>
+                            <label className="block text-sm font-medium text-gray-700 mb-2">
+                                プロジェクト説明 <span className="text-red-600">*</span>
+                            </label>
+                            <textarea
+                                rows="4"
+                                placeholder="どのようなデータを募集するか詳しく説明してください"
+                                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                            ></textarea>
+                        </div>
+                        
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <div>
+                                <label className="block text-sm font-medium text-gray-700 mb-2">
+                                    分野 <span className="text-red-600">*</span>
+                                </label>
+                                <select className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
+                                    <option>数学</option>
+                                    <option>歴史</option>
+                                    <option>プログラミング</option>
+                                    <option>料理</option>
+                                    <option>医療</option>
+                                    <option>ビジネス</option>
+                                    <option>その他</option>
+                                </select>
+                            </div>
+                            
+                            <div>
+                                <label className="block text-sm font-medium text-gray-700 mb-2">
+                                    難易度 <span className="text-red-600">*</span>
+                                </label>
+                                <select className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
+                                    <option>初級</option>
+                                    <option>中級</option>
+                                    <option>上級</option>
+                                </select>
+                            </div>
+                        </div>
+                        
+                        <div>
+                            <label className="block text-sm font-medium text-gray-700 mb-2">
+                                提出フォーマット <span className="text-red-600">*</span>
+                            </label>
+                            <select className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
+                                <option>CSV</option>
+                                <option>JSON</option>
+                                <option>フォーム入力</option>
+                            </select>
+                        </div>
+                        
+                        <div>
+                            <label className="block text-sm font-medium text-gray-700 mb-2">
+                                フォーマット例
+                            </label>
+                            <textarea
+                                rows="3"
+                                placeholder="例: 問題,解答,解説"
+                                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 font-mono text-sm"
+                            ></textarea>
+                        </div>
+                        
+                        <div>
+                            <label className="block text-sm font-medium text-gray-700 mb-2">
+                                希望ライセンス <span className="text-red-600">*</span>
+                            </label>
+                            <select className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
+                                <option>CC0（著作権放棄）</option>
+                                <option>CC-BY 4.0（要表示）</option>
+                            </select>
+                        </div>
+                        
+                        <div>
+                            <label className="block text-sm font-medium text-gray-700 mb-2">
+                                募集期限
+                            </label>
+                            <input
+                                type="date"
+                                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                            />
+                        </div>
+                        
+                        <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4">
+                            <p className="text-sm text-yellow-800">
+                                <span className="font-semibold">重要:</span> このプロジェクトで収集されるデータは、
+                                すべて協力者のオリジナルデータに限定されます。既存の教材や試験問題からの流用は禁止です。
+                            </p>
+                        </div>
+                        
+                        <div className="flex space-x-4">
+                            <button
+                                type="submit"
+                                className="btn-primary text-white px-8 py-3 rounded-lg font-medium flex-1"
+                            >
+                                プロジェクトを作成
+                            </button>
+                            <button
+                                type="button"
+                                onClick={() => setCurrentView('home')}
+                                className="border-2 border-gray-300 text-gray-700 px-6 py-3 rounded-lg font-medium hover:bg-gray-50"
+                            >
+                                キャンセル
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        );
+        
+        // プロフィール画面
+        const ProfileView = ({ setCurrentView }) => (
+            <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+                <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-8 mb-6">
+                    <div className="flex items-start space-x-6">
+                        <div className="w-24 h-24 bg-gradient-to-br from-blue-500 to-purple-600 rounded-full flex items-center justify-center text-white text-3xl font-bold">
+                            田
+                        </div>
+                        <div className="flex-1">
+                            <h1 className="text-2xl font-bold text-gray-900 mb-2">田中太郎</h1>
+                            <p className="text-gray-600 mb-4">数学とプログラミングが好きです。教育系データセットの作成に興味があります。</p>
+                            <button className="text-blue-600 hover:text-blue-700 font-medium">
+                                プロフィールを編集
+                            </button>
+                        </div>
+                    </div>
+                </div>
+                
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
+                    <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6 text-center">
+                        <div className="text-3xl font-bold text-blue-600 mb-2">12</div>
+                        <div className="text-gray-600">参加プロジェクト</div>
+                    </div>
+                    <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6 text-center">
+                        <div className="text-3xl font-bold text-purple-600 mb-2">89</div>
+                        <div className="text-gray-600">データ提出数</div>
+                    </div>
+                    <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6 text-center">
+                        <div className="text-3xl font-bold text-green-600 mb-2">3</div>
+                        <div className="text-gray-600">作成プロジェクト</div>
+                    </div>
+                </div>
+                
+                <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+                    <h2 className="text-xl font-semibold mb-4">最近の活動</h2>
+                    <div className="space-y-4">
+                        {[
+                            { action: 'データを提出しました', project: '数学の文章題データセット', time: '2時間前' },
+                            { action: 'プロジェクトに参加しました', project: '日本の歴史に関するQ&A', time: '1日前' },
+                            { action: 'データを提出しました', project: 'プログラミング初心者向けコード例', time: '3日前' },
+                        ].map((activity, idx) => (
+                            <div key={idx} className="flex items-center justify-between py-3 border-b border-gray-100 last:border-0">
+                                <div>
+                                    <p className="text-gray-900 font-medium">{activity.action}</p>
+                                    <p className="text-sm text-gray-600">{activity.project}</p>
+                                </div>
+                                <span className="text-sm text-gray-500">{activity.time}</span>
+                            </div>
+                        ))}
+                    </div>
+                </div>
+            </div>
+        );
+        
+        // メインアプリ
+        const App = () => {
+            const [currentView, setCurrentView] = useState('home');
+            
+            return (
+                <div className="min-h-screen bg-gray-50">
+                    <Header currentView={currentView} setCurrentView={setCurrentView} />
+                    
+                    {currentView === 'home' && <HomeView setCurrentView={setCurrentView} />}
+                    {currentView === 'detail' && <ProjectDetailView setCurrentView={setCurrentView} />}
+                    {currentView === 'submit' && <SubmitView setCurrentView={setCurrentView} />}
+                    {currentView === 'create' && <CreateProjectView setCurrentView={setCurrentView} />}
+                    {currentView === 'profile' && <ProfileView setCurrentView={setCurrentView} />}
+                    {currentView === 'myprojects' && <HomeView setCurrentView={setCurrentView} />}
+                    
+                    <footer className="bg-white border-t border-gray-200 mt-16">
+                        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+                            <div className="text-center text-gray-600 text-sm">
+                                <p className="mb-2">© 2025 DataMatch - LLM Dataset Matching Platform</p>
+                                <div className="flex justify-center space-x-6">
+                                    <a href="#" className="hover:text-blue-600">利用規約</a>
+                                    <a href="#" className="hover:text-blue-600">プライバシーポリシー</a>
+                                    <a href="#" className="hover:text-blue-600">お問い合わせ</a>
+                                </div>
+                            </div>
+                        </div>
+                    </footer>
+                </div>
+            );
+        };
+        
+        ReactDOM.render(<App />, document.getElementById('root'));
+    </script>
+</body>
+</html>
